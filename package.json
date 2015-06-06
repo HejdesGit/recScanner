@@ -3,7 +3,8 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "node ./bin/www",
+    "debug": "node-debug app.js"
   },
   "dependencies": {
     "body-parser": "~1.10.0",
@@ -17,7 +18,8 @@
   },
   "devDependencies": {
     "gulp": "~3.8.10",
+    "gulp-livereload": "~3.4.0",
     "gulp-nodemon": "~1.0.4",
-    "gulp-livereload": "~3.4.0"
+    "winston": "^1.0.0"
   }
 }
