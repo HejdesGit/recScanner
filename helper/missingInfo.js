@@ -1,25 +1,14 @@
 var scrape = require('scrape');
 var util = require('util');
-var winston = require('winston');
+var fs = require('fs');
 
 module.exports = (function () {
 	'use strict';
-	var getPicture = function (callback) {
-		var logger = new (winston.Logger)({
-			transports: [
-				new (winston.transports.Console)(),
-				new (winston.transports.File)({ filename: 'somefile.log' })
-			]
-		});
-		var score,
-			badPicture = false,
-			picture,
-			message = "",
-			arr = 600;
-		for(var i = 551; i <= arr; i++) {
-			//console.log(i);
-			//}
-			scrape.request('http://www.svt.se/mat/?p='+i, function (err, $) {
+	var getMissingInfo = function (callback) {
+		var message = "",
+			endOfArray = 600;
+		for (var i = 1; i < endOfArray; i++) {
+			scrape.request('http://www.svt.se/mat/?p=' + i, function (err, $) {
 				if (err) return console.error(err);
 				//console.log("FETCHING");
 				$('div.svtExpandableColumn').each(function (div) {
@@ -37,11 +26,13 @@ module.exports = (function () {
 							var INGRESS = div.find('hgroup .svtH3.svtH3-THEMED');
 							var ALLERGI = div.find('ul.svtXDisplayInline li.svtXDisplayInline');
 							var CHEFPROGRAM = div.find('.svtMediaBlockText.svtXFloatLeft.svtXMargin-Right-10px strong');
+							var Link = div.find('.svtLink-Toolbox.svtJsSendEmail');
+							var cookingTime = div.find('.svtIcon.svtIcon_Timer');
 							//var log = fs.createWriteStream('logHEJDE.txt', {'flags': 'a'});
 							// use {'flags': 'a'} to append and {'flags': 'w'} to erase and write a new file
 							//log.write('hej');
 							//log.end("this is a message");
-							if(title2[0]){
+							if (title2[0]) {
 								message = "";
 								message += util.inspect(title2[0].children[0].data) + ",, ";
 
@@ -49,7 +40,7 @@ module.exports = (function () {
 								if (INGREDIENSER[0]) {
 									message += 'HAS,, ';
 								} else {
-									message +=  'MISSING,, ';
+									message += 'MISSING,, ';
 								}
 
 								message += 'PORTIONER:';
@@ -59,9 +50,9 @@ module.exports = (function () {
 									message += 'MISSING,, ';
 								}
 
-								message +=  'INGRESS:';
+								message += 'INGRESS:';
 								if (INGRESS[0]) {
-									message +=  'HAS,, ';
+									message += 'HAS,, ';
 								} else {
 									message += 'MISSING,, ';
 								}
@@ -76,7 +67,7 @@ module.exports = (function () {
 									}
 									if (CHEFPROGRAM[0].children[0].data == 'Kock:') {
 										var CHEF = true;
-										message +=  'Kock:';
+										message += 'Kock:';
 										message += 'HAS,, ';
 									}
 
@@ -90,15 +81,15 @@ module.exports = (function () {
 									if (CHEFPROGRAM[1].children[0].data == 'Kock:') {
 										var CHEF = true;
 										message += 'Kock:';
-										message +=  'HAS,, ';
+										message += 'HAS,, ';
 									}
 								}
 								if (!PROG) {
 									message += 'PROGRAM:';
-									message +=  'MISSING,, ';
+									message += 'MISSING,, ';
 								}
 								if (!CHEF) {
-									message +=  'Kock:';
+									message += 'Kock:';
 									message += 'MISSING,, ';
 								}
 
@@ -123,9 +114,27 @@ module.exports = (function () {
 									}
 									message += aller.toString() + ",, ";
 								} else {
-									message += 'MISSING';
+									message += 'MISSING,, ';
 								}
-								logger.log('info', message);
+								message += 'TILLAGNINGSTID:';
+								if (cookingTime[0]) {
+
+									message += cookingTime[0].next.next.next.data;
+								}
+								else{
+									message += 'MISSING,, ';
+								}
+								var url = Link[0].attribs['data-url'];
+								var lastSlash = Link[0].attribs['data-url'].lastIndexOf("/");
+								var slug = url.slice(lastSlash+1, url.length);
+								message += ' SLUG:';
+								message += slug + ',,';
+								message += ' URL:';
+								message += Link[0].attribs['data-url'] + '\n';
+
+								fs.appendFile('missing.log', message, function (err) {
+
+								});
 							}
 						});
 
@@ -135,6 +144,6 @@ module.exports = (function () {
 		}
 	};
 	return {
-		getPicture: getPicture
+		getMissingInfo: getMissingInfo
 	};
 }());
