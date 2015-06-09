@@ -3,7 +3,7 @@ var gulp = require('gulp'),
   livereload = require('gulp-livereload');
 
 
-gulp.task('develop', function () {
+gulp.task('dev', function () {
   livereload.listen();
   nodemon({
     script: 'bin/www',
